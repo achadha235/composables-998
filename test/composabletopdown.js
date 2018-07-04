@@ -403,7 +403,7 @@ contract('ComposableTopDown', function(accounts) {
   * Multi Token tests
   **************************************/
   
-  it('should return the correct number of totalTokenContracts and balances after ERC20 contracts are added', async () => {
+  it('should return the correct number of totalERC223Contracts and balances after ERC20 contracts are added', async () => {
     const aliceComposableTokenId = 2;
     const composableOwnerId = await composable.ownerOf(aliceComposableTokenId);
     assert(composableOwnerId === alice, `Alice does not own own composable token ${composableOwnerId}`)
@@ -420,16 +420,16 @@ contract('ComposableTopDown', function(accounts) {
       const tx = await web3.eth.sendTransaction({
         from: alice, to: erc20s[i].address, data: transferMethodTransactionData, value: 0, gas: 500000
       });
-      const balance = await composable.balanceOfToken.call(aliceComposableTokenId, erc20s[i].address);
+      const balance = await composable.balanceOfERC223.call(aliceComposableTokenId, erc20s[i].address);
       assert(
         balance.equals(transferedAmount),
         `Expected token #${i} to have a balance of ${transferedAmount} but got ${balance}`
       );
     }
-    const numAddedTokenContracts = await composable.totalTokenContracts(aliceComposableTokenId);
+    const numAddedTokenContracts = await composable.totalERC223Contracts(aliceComposableTokenId);
     assert(
       numAddedTokenContracts.equals(numTokens),
-      `Expected ${numTokens} totalTokenContracts but got ${numAddedTokenContracts}`);
+      `Expected ${numTokens} totalERC223Contracts but got ${numAddedTokenContracts}`);
   });
 
   it('should return the correct number of totalChildTokens and totalChildTokens after NFT contracts are added', async () => {
@@ -464,13 +464,13 @@ contract('ComposableTopDown', function(accounts) {
     );
   });
 
-  it('should return the correct number of totalTokenContracts after ERC20 contracts are removed', async () => {
+  it('should return the correct number of totalERC223Contracts after ERC20 contracts are removed', async () => {
     const aliceComposableTokenId = 2;
-    let numTokenContracts = (await composable.totalTokenContracts(1)).toNumber();
+    let numTokenContracts = (await composable.totalERC223Contracts(1)).toNumber();
     let nextNumTokenContracts;
     for (var i = 0; i < numTokenContracts; i++) {
       const tokenAddress = await composable.tokenContractByIndex(aliceComposableTokenId, i);
-      const remainingBalance = await composable.balanceOfToken.call(aliceComposableTokenId, tokenAddress);
+      const remainingBalance = await composable.balanceOfERC223.call(aliceComposableTokenId, tokenAddress);
       const transferToken = Composable.abi.filter(f => f.name === 'transferToken' && f.inputs.length === 4)[0];
       const transferMethodTransactionData = web3Abi.encodeFunctionCall(
         transferToken, [aliceComposableTokenId, alice, tokenAddress, remainingBalance.toNumber()]
@@ -478,7 +478,7 @@ contract('ComposableTopDown', function(accounts) {
       const tx = await web3.eth.sendTransaction({
         from: alice, to: composable.address, data: transferMethodTransactionData, value: 0, gas: 500000
       });
-      nextNumTokenContracts = (await composable.totalTokenContracts(1)).toNumber();
+      nextNumTokenContracts = (await composable.totalERC223Contracts(1)).toNumber();
       assert(
         numTokenContracts - 1 === nextNumTokenContracts,
         `Expected ${numTokenContracts - 1} tokenContracts but got ${nextNumTokenContracts}`
@@ -500,7 +500,7 @@ contract('ComposableTopDown', function(accounts) {
       let nextTotalChildTokens;
       for (var j = 0; j < numChildTokensToRemove; j++) {
         const childTokenId = await composable.childTokenByIndex(aliceComposableTokenId, contractAddress, totalChildTokens - 1);
-        const safeTransferChild = Composable.abi.filter(f => f.name === 'safeTransferChild' && f.inputs.length === 3)[0];
+        const safeTransferChild = ComposableTopDown.abi.filter(f => f.name === 'safeTransferChild' && f.inputs.length === 3)[0];
         const transferMethodTransactionData = web3Abi.encodeFunctionCall(
           safeTransferChild, [alice, contractAddress, childTokenId.toNumber()]
         );
